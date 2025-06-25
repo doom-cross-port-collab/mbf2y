@@ -1,4 +1,4 @@
-# Modder's Best Friend aka MBF25 v0.2
+# Modder's Best Friend aka MBF25 v0.2.1
 
 MBF25 is a continuation of the MBF21 specification. The project has these goals:
 
@@ -21,6 +21,8 @@ Because of the amount of content added to this specification, information has be
 - [Random spawners specification](./docs/spawners.md).
 
 ### Version History
+- v0.2.1
+    - Removed linedef flag 11 for now and added `A_ChangeVelocityEx`, `A_SelfRaise`, `A_JumpIfTargetInSightEx`, and `A_JumpIfTracerInSightEx` codepointers.
 - v0.2
     - Initial draft spec (v0.1 is the old, defunct prototype).
 
