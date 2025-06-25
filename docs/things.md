@@ -1,11 +1,11 @@
-# MBF25 Thing Specification v0.2
+# MBF25 Thing Specification v0.2.1
 MBF25 expands upon the work done in MBF21 and ID24, vastly expanding modding potential primarily by leveraging existing code.
 
 ## Additional Dehacked Thing Groups
 
 Expanding and building upon the functionaluty of MBF21's `Infighting group`, `Projectile group`, and `Splash group`, additional groups have beeen created.
 
-### Multile Group Support
+### Multiple Group Support
 Up to 3 additional Infighting, Projectile, and Splash Groups can be defined on a single Thing, as well as the new Groups outlined below.
 * Example: `Infighting group = M` and `Infighting group 2 = N` in Thing definition.
     * In this example, the Thing would not engage in infighting with a target that has any Infighting group that matches `M` or `N`.
@@ -395,7 +395,49 @@ It is now possible for frames to have up to ten args by adding `Args9 = X` and `
     * Notes:
         * It is best to not use this codepointer outside of the `Patrol state` sequence. For more information on patrolling things, see Map Object Flags.
 
+* **A_ChangeVelocityEx(velx, vely, velz, flags)**
+    * Sets caller's own velocity, either to absolute values or relative values.
+    * Args:
+        * `velx (fixed)`: Amount of X (forward/back) momentum to apply
+        * `vely (fixed)`: Amount of Y (left/right) momentum to apply
+        * `velz (fixed)`: Amount of Z (up/down) momentum to apply
+        * `flags (int)`: Allows further customization:
+            * `DONTIGNOREZERO (0x001)`: Typically, `velx`, `vely`, and `velz` values of 0 are ignored, but this will cause them to be parsed when setting absolute momentum or multiplying momentum.
+            * `ABSOLUTEANGLE (0x002)`: Does not use caller's current angle for `velx` and `vely`.
+            * `ADDXVELOCITY (0x004)`: Adds `velx` to current X velocity.
+            * `ADDYVELOCITY (0x008)`: Adds `vely` to current Y velocity.
+            * `ADDZVELOCITY (0x010)`: Adds `velz` to current Z velocity.
+            * `MULTXVELOCITY (0x020)`: Multiplies current X velocity by `velx`. Supercedes `ADDXVELOCITY`.
+            * `MULTYVELOCITY (0x040)`: Multiplies current Y velocity by `vely`. Supercedes `ADDYVELOCITY`.
+            * `MULTZVELOCITY (0x080)`: Multiplies current Z velocity by `velz`. Supercedes `ADDZVELOCITY`.
+        * Notes:
+            * Subject to change (and seeking feedback).
+
 ### Actor Logic Codepointers
+
+* **A_JumpIfTargetInSightEx(state, fov, flags)**
+    * Jumps to a state if caller's target is in line-of-sight. Optionally checks for a direct path between the the caller and its target.
+    * Args:
+        * `state (uint)`: State to jump to
+        * `fov (fixed)`: Field-of-view, relative to calling actor's angle, to check for target in. If zero, the check will occur in all directions.
+        * `flags (int)`: Allows further customization:
+            * `CHECKPATH (0x001)`: Checks for `SOLID` obstructions in the path between caller and its target.
+            * `CHECKHITSCAN (0x002)`: Checks for a clear path for a hitscan. Will also check for hitscan-blocking linedefs (but not any self-referencing sectors).
+            * `CHECKLINES (0x004)`: Checks for any impassible linedefs, including "Block monsters" linedefs or "Block land monsters" linedefs as appropriate given the caller's current flags.
+        * Notes:
+            * Additional flags may be added as needed in future spec revisions.
+
+* **A_JumpIfTracerInSightEx(state, fov, flags)**
+    * Jumps to a state if caller's tracer target is in line-of-sight. Optionally checks for a direct path between the the caller and its target.
+    * Args:
+        * `state (uint)`: State to jump to
+        * `fov (fixed)`: Field-of-view, relative to calling actor's angle, to check for tracer target in. If zero, the check will occur in all directions.
+        * `flags (int)`: Allows further customization:
+            * `CHECKPATH (0x001)`: Checks for `SOLID` obstructions in the path between caller and its tracer target.
+            * `CHECKHITSCAN (0x002)`: Checks for a clear path for a hitscan. Will also check for hitscan-blocking linedefs (but not any self-referencing sectors).
+            * `CHECKLINES (0x004)`: Checks for any impassible linedefs, including "Block monsters" linedefs or "Block land monsters" linedefs as appropriate given the caller's current flags.
+        * Notes:
+            * Additional flags may be added as needed in future spec revisions.
 
 * **A_JumpIfTargetHealthBelow(state, health)**
     * Jumps to a state if caller's target's health is below the specified threshold.
@@ -675,6 +717,15 @@ It is now possible for frames to have up to ten args by adding `Args9 = X` and `
         * `nodropped (uint)`: If nonzero, the dropped thing/random spawner spawn thing will not have the `DROPPED` flag set.
     * Notes:
         * Functionally, just re-uses the existing drop item code.
+        * 
+
+* **A_SelfRaise**
+    * Self-resurrecting codepointer. Similar in many ways to the `A_HealChase` or `A_VileChase` codepointers' heal functions, but can only be called on self and can be used on any duration of a frame.
+    * No args.
+    * Notes:
+        * Does not check for frame length; simply jumps to the Raise state and resurrects the caller if it is currently a `CORPSE` as though it had been resurrected via `A_HealChase` or `A_VileChase`.
+
+
 
 ### Map Manipulation Codepointers
 
