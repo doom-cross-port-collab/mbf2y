@@ -1,4 +1,4 @@
-# MBF25 Random Spawner Definition v0.2
+# MBF2y Random Spawner Definition v0.2.3
 
 Random spawners are tables of RNG values and corresponding thing types. They can be used in conjunction with the `A_DropItem` codepointer, the `Dropped spawner` thing field, or the `A_SpawnFlyEx` codepointer to randomize what will spawn.
 

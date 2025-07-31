@@ -1,4 +1,6 @@
-# MBF25 Hitscan Type Definition v0.2
+# MBF2y Hitscan Type Definition v0.2.3
+
+**Please note that this particular area of the spec is still in an early draft and is under discussion. It may not make it to the finished specification.**
 
 Hitscan types (sometimes called "pufftypes" due to the usual presence of a bullet puff) are a concept that adds some customization potential to various types of hitscan attacks. Hitscan types have the following properties:
 
