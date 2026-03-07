@@ -97,3 +97,20 @@
         * `WP2_USEAMMO (0x040)`: Will subtract the weapon's `Ammo per shot` value from the weapon's ammo type, to a minimum of 0.
   * Notes:
     * The spawned projectile's `tracer` pointer is set to the player's autoaim target, if available.
+    
+* **A_ConsumeAmmoEx(amount, type, state, flags)**
+  * Consumes ammo of a defined type, or performs a state jump.
+  * Args:
+    * `amount (int)`: How much ammo to consume; 0 applies the ammo per shot field, negative values add ammo back to the player, default = 0. This behaves identically to the single field from MBF21's A_ConsumeAmmo pointer.
+    * `type (uint, string)`: Value of the ammo type that will be consumed:
+        * 0-5 are always valid arguments
+            * 0-3 are the traditional four weapon types.  
+            * A value of 4 will consume the current weapon's defined ammo type. 
+            * A value of 5 will consume no ammo, but may be useful to send a weapon to a specific state without changing the ammo value, effectively performing the same function as MBF21's A_CheckAmmo.
+        * Values >5 allowed if other ammo types are defined.  
+        * 'type' can also be a string if a given ammo type has a valid alias.
+        * If passed an invalid ammo type or string, the function should either fall back to the Ammo Per Shot field or consume no ammo.
+        * Default = 4
+    * 'state (string, uint)': A state label or number to jump to if the true value of 'type' < 'amount' of 'type'. State labels strongly recommended.  Default "Ready".
+    * 'flags (int)`: Allows further customization:
+        * `CAX_BYPASSINFINITEAMMO (0x001)`: Will force this pointer to consume ammo when the player has the Infinite Ammo powerup.
