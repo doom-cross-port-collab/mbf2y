@@ -113,4 +113,4 @@
         * Default = 4
     * 'state (string, uint)': A state label or number to jump to if the true value of 'type' < 'amount' of 'type'. State labels strongly recommended.  Default "Ready".
     * 'flags (int)`: Allows further customization:
-        * `CAX_BYPASSINFINITEAMMO (0x001)`: Will force this pointer to consume ammo when the player has the Infinite Ammo powerup.
+        * `CAE_BYPASSINFINITEAMMO (0x001)`: Will force this pointer to consume ammo when the player has the Infinite Ammo powerup.
