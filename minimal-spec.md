@@ -28,6 +28,9 @@ This namespace will require its own documentation. At a minimum, it will include
 
 ## Frames
 
+#### Semi fullbright
+- The `SEMIBRIGHT` flag, when added to a frame, will make a thing frame be drawn halfway between its normal brightness level and fullbright.
+
 #### Args expansion
 - In order to facilitate enhanced codepointers and parameterization, it was necessary to extend the amount of Args.
 - When there are simple binary flags that can be set on a codepointer, they are combined into a `flags` Arg that accepts mnemonics or numeric values. DECLARATE parsers should avoid accepting mnemonics for these Args outside of the correct Args fields and associated codepointers if possible.
@@ -118,7 +121,7 @@ In general, when `flatdamage` is added to a parameterized damage calculation, th
 | Flag              | Value          | Description                                                                                                                                                                           |
 |-------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ISMONSTER         | 0x000000000001 | Has no effect with COUNTKILL. Thing is considered a monster; does not spawn if `-nomonsters` is set and is blocked by monster-blocking and impassible linedefs. (Lost Souls)          |
-| NODAMAGE          | 0x000000000002 | If SHOOTABLE, thing does not lose health and cannot die, but still reacts as though it has taken damage.                                                                              |
+| NODAMAGE          | 0x000000000002 | If SHOOTABLE, thing does not lose health and cannot die, but still reacts as though it has taken damage, including movement.                                                          |
 | ANTITELEFRAG      | 0x000000000004 | If thing would be dealt damage as a result of a telefrag, it instead deals the damage to the source.                                                                                  |
 | NOTAUTOAIMED      | 0x000000000008 | Thing is completely ignored by all player autoaim. Note that this does not affect BFG sprays or monster attacks.                                                                      |
 | NOTSPRAYED        | 0x000000000010 | Thing is completely ignored by all `A_BFGSpray` and parameterized equivalents.                                                                                                        |
@@ -135,7 +138,7 @@ In general, when `flatdamage` is added to a parameterized damage calculation, th
 | LOYAL             | 0x000000008000 | Thing will never infight. If FRIENDLY, will never retaliate against other FRIENDLY things or the player; otherwise, will only ever attack FRIENDLY things or the player.              |
 | NORADTHRUST       | 0x000000010000 | When thing deals radius damage via a codepointer, it will never apply thrust to damaged things.                                                                                       |
 | NODMGTHRUST       | 0x000000020000 | When thing deals damage upon impact (such as when acting as projectile or charging Lost Soul), it will never apply thrust to damaged things.                                          |
-| ANTIGRAV          | 0x000000040000 | Gravity moves this thing upward instead of downward. Can be combined with LOGRAV.                                                                                                     |
+| ANTIGRAV          | 0x000000040000 | Gravity moves this thing upward instead of downward. Can be combined with LOGRAV. When the ceiling a thing with this flag is touching moves, the thing will move with it.             |
 | STAYONFLAT        | 0x000000080000 | Thing will never move into a sector with a different floor texture.                                                                                                                   |
 | SEMISOLID         | 0x000000100000 | Thing cannot be moved into by other things as though it is SOLID, but if SOLID things are overlapping it, both it and those things can still move normally.                           |
 | DUMMY             | 0x000000200000 | Thing is treated as a player for the purposes of crossing special linedefs.                                                                                                           |
@@ -143,6 +146,8 @@ In general, when `flatdamage` is added to a parameterized damage calculation, th
 | HITIMPASSIBLE     | 0x000000800000 | Thing cannot cross impassible linedefs whatsoever; if it's a MISSILE, it explodes on impact.                                                                                          |
 | NOCRUSH           | 0x000001000000 | Thing does not get turned into gibs or a Crush Thing (or, if DROPPED, get destroyed) when crushed by a moving ceiling or floor.                                                       |
 | NOSCROLL          | 0x000002000000 | Thing is not moved by floor scrollers (or ceiling scrollers, if it has SPAWNCEILING and is on the ceiling).                                                                           |
+| PUSHABLE          | 0x000004000000 | Thing can be pushed by other moving, `SOLID` things. If thing is `SHOOTABLE`, it can also be pushed by damage.                                                                        |
+| CANNOTPUSH        | 0x000008000000 | `SOLID` thing or projectile cannot push `PUSHABLE` things.                                                                                                                            |
 | GENERIC1...4      | Last 4 values  | Generic thing flags that have no hardcoded purpose and can be used for binary logic trees.                                                                                            |
 
 #### Updated Thing Codepointers
@@ -177,6 +182,12 @@ Besides the general changes made to codepointer parameterization as a result of 
     - `flags4 (int)`: MBF2y actor flag(s) to remove.
 
 #### New Thing Codepointers
+
+- **A_PlayerJumpIfWeapon(state, weaponnum)**
+  - Only functions on player mobjs. Jumps to the specified frame based on the player's current weapon.
+  - Args:
+    - `state (uint)`: State to jump to.
+    - `weaponnum (int)`: Weapon ID to check for.
 
 - **A_LineEffectEx(special, tag)**
   - Enhanced version of MBF's `A_LineEffect` that works more reliably and can also be used to activate teleportation specials, which causes the caller to teleport to a teleport destination in the tagged sector.
@@ -214,6 +225,8 @@ Besides the general changes made to codepointer parameterization as a result of 
       - `A_SPEX_INHERITGENERIC4 (0x0800)`: Forces the spawnee to have the same GENERIC4 status as the spawner.
       - `A_SPEX_INHERITHEALTH (0x1000)`: Sets the spawnee's health to the spawner's health immediately upon spawn.
       - `A_SPEX_INHERITTRANSLATION (0x2000)`: Changes the spawnee's translation lump to the spawner's translation lump. Use case is for gore mods using colored blood.
+      - `A_SPEX_INHERITVELOCITY1 (0x4000)`: Adds the absolute values of the spawner's x and y velocity to the spawnee's absolute x and y velocity, respectively.
+      - `A_SPEX_INHERITVELOCITY2 (0x8000)`: Adds the absolute values of the spawner's z velocity to the spawnee's z velocity.
   - Notes:
     - If the spawnee is a missile, the `tracer` and `target` pointers are set as follows (assuming that there isn't a `flags` option to contradict it):
       - If spawner is also a missile, `tracer` and `target` are copied to spawnee.
@@ -338,6 +351,26 @@ Besides the general changes made to codepointer parameterization as a result of 
       - `A_LKEX_AMBUSHNOMAXDIST (0x002)`: Bypass maxdistance if AMBUSH is set and there is a valid soundtarget.
       - `A_LKEX_AMBUSHUSEFOV (0x004)`: Use fov even if the thing is set to AMBUSH and has a valid soundtarget.
       - `A_LKEX_NOSEESOUND (0x008)`: Do not play the thing's see sound if it spots a target
+
+- **A_SnapToTarget(angle, x_ofs, y_ofs, z_ofs)**
+  - Causes an object to jump to the position of its `target`.
+  - Args:
+    - `angle (fixed)`: Angle from the `target` to base its position on, in degrees.
+    - `x_ofs (fixed)`: X (forward/backward) position offset, relative to `angle`.
+    - `y_ofs (fixed)`: Y (left/right) position offset, relative to `angle`.
+    - `z_ofs (fixed)`: Z (up/down) spawn position offset.
+  - Notes:
+    - No-ops if caller does not have a valid `target`.
+
+- **A_SnapToTracer(angle, x_ofs, y_ofs, z_ofs)**
+  - Causes an object to jump to the position of its `tracer`.
+  - Args:
+    - `angle (fixed)`: Angle from the `tracer` to base its position on, in degrees.
+    - `x_ofs (fixed)`: X (forward/backward) position offset, relative to `angle`.
+    - `y_ofs (fixed)`: Y (left/right) position offset, relative to `angle`.
+    - `z_ofs (fixed)`: Z (up/down) spawn position offset.
+  - Notes:
+    - No-ops if caller does not have a valid `tracer`.
 
 - **A_Wander(maxturn, turnchance, fov, flags)**
   - Generic movement codepointer for aimlessly wandering monsters that haven't yet obtained a target. Calls `A_LookEx`, and if a thing would move into a linedef that it can press such as a door, it will activate it.
@@ -608,12 +641,23 @@ Besides the general changes made to codepointer parameterization as a result of 
   - Notes:
     - Damage formula is: `damage = flatdamage + (damagebase * random(1, damagedice))`; this is then multiplied by `zerkfactor` if the player has Berserk.
 
-- **A_WeaponJumpIfBerserk(state)**
-  - Jumps to a state if the player has the berserk powerup active.
+- **A_WeaponJumpIfPowerup(state, powerup)**
+  - Jumps to a state if the player has the specified powerup active.
   - Args:
-    - `state (state)`: State label to jump to.
-  - Notes:
-    - For best results, this should be a zero-duration state called before `A_WeaponReady` frames.
+    - `state (uint)`: State label to jump to.
+    - `powerup (uint)`: Powerup to check for. Defaults to `0` if not set.
+      - `0:` Berserk
+      - `1:` Liteamp
+      - `2:` Radsuit
+      - `3:` Blursphere
+      - `4:` Invuln
+      - `5:` Area map
+
+- **A_WeaponJumpIfAmmoDivisible(state, amount)**
+  - Jumps to a state if the weapon's current ammunition amount is divisible by the specified amount.
+  - Args:
+    - `state (uint)`: State label to jump to.
+    - `amount (uint)`: Amount of ammunition to check for. Values of 0 are not accepted, and values of 1 (default) will always return `true`.
 
 ## Miscellaneous
 Intentionally, there are fewer compatibility changes in MBF2y than there were in MBF21, as MBF21 does an excellent job of retaining vanilla Doom feel. The changes made were very deliberate.
@@ -650,7 +694,7 @@ These have already been implemented in prototypes to one extent or another and c
 #### Nice To Haves
 These features have not yet been attempted, but discussions have been had about how they might be achieved, and in theory, they should be doable.
   - **Expose GENERIC1, GENERIC2, GENERIC3, and GENERIC4 flags to level editors:** Allow mappers to set these flags (or others) on objects.
-  - **Height-preserving teleport linedef specials:** Teleportatino linedefs that preserve the teleporting thing's Z position, a la Final Doom.
+  - **Height-preserving teleport linedef specials:** Teleportation linedefs that preserve the teleporting thing's Z position, a la Final Doom.
   - **Teleport linedef specials with multiple destinations:** Teleportation linedefs that can have multiple destinations with the same tag, selected at random, with non-telefragging objects being taken to the first random vacant destination selected.
   - **Toggle midtex and blocking status of linedef:** Linedef specials that can toggle the visibility and blocking status of a two-sided linedef's midtex (shootable glass, dedicated force fields, etc.).
   - **Changing tagged sector floors and/or ceilings in relation with linedef's sectors:** Linedef specials that can cause tagged sectors to move together with the linedef's sector to create stable multi-sector lifts.
